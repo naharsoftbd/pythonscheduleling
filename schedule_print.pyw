@@ -17,43 +17,31 @@ def getNetworkIp():
 
 ipaddress = getNetworkIp()
 
-url = 'http://127.0.0.1:8000/api/v1/printers'
+url = 'http://192.168.4.28:8000/api/v1/printers'
 printers = win32print.EnumPrinters(win32print.PRINTER_ENUM_LOCAL, None, 2)
 myobj = []
 for printer in printers:
-  myobj.append({'printer_name': printer['pPrinterName'],'status':0,'client_ip':ipaddress})
+  currentprinter = win32print.GetDefaultPrinter();
+  if currentprinter == printer['pPrinterName']:
+    status = 1
+  else:
+    status = 0
+  myobj.append({'printer_name': printer['pPrinterName'],'status':status,'client_ip':ipaddress})
 
 
 headers = {'Content-type': 'application/json', 'Accept': 'text/plain'}
 x = requests.post(url, json = {'printers':myobj},headers=headers)
 
-print(x.json())
 
-r = requests.get('http://127.0.0.1:8000/api/v1/printers')
-
-x=r.json()['printers']
-
-for i in x:
-  print(i['printer_name'])
-
-# some JSON:
-url = "http://127.0.0.1:8000/api/v1/printers"
-#PAYLOAD_CONF =  '{ "name":"John", "age":30, "city":"New York"}'
-response = urlopen(url)
-paydic = json.dumps(response.read().decode())
-resp = json.loads(paydic)
-print (resp)
-
-"""
 while True:
-  if os.path.exists("C:\\schedulestore.json"):
-   f = open("C:\\schedulestore.json", "r+") 
-   f.seek(0)
-   # to erase all data 
-   f.truncate() 
-   os.system('echo '+ paydic + ' >> C:/schedulestore.json')
-  else:
-   os.system('echo '+ paydic + ' >> C:/schedulestore.json')
-  print ("Local current time :")
-  time.sleep(0.1)
-  """
+  url = "http://192.168.4.28:8000/api/v1/printers"
+  response = requests.get(url)
+  defaultprinter = response.json()['defaultprinter'][0]['printer_name']
+  win32print.SetDefaultPrinter(defaultprinter)
+  currentprinter = win32print.GetDefaultPrinter();
+  if response.json()['filename']:
+    filename = response.json()['filename'][0]['printing_file']
+    win32api.ShellExecute(0, "print", filename, '/d:"%s"' % currentprinter, ".", 0)
+  print(currentprinter)  
+  time.sleep(1)
+  
